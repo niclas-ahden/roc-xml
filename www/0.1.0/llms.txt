@@ -1,0 +1,76 @@
+# LLM Docs
+
+## Compact Docs
+
+Copy just this section if you want to keep your context small.
+If you want all docs, check the section `Full Docs per Module` below.
+
+Node.element : Str, List Attribute, List Node -> Node
+Node.text : Str -> Node
+Node.num : Num * -> Node
+Node.bool : Bool -> Node
+Node.attribute : Str, Str -> Attribute
+Node.render : Node -> Str
+Node.escape_xml : Str -> Str
+Document.with_declaration : Node -> Document
+Document.render : Document -> Str
+
+## Full Docs per Module
+### Node
+
+Description:
+XML attribute
+
+Description:
+XML node
+
+element : Str, List Attribute, List Node -> Node
+
+Description:
+Create an XML element
+
+text : Str -> Node
+
+Description:
+Create a text node
+
+num : Num * -> Node
+
+Description:
+Create a number node
+
+bool : Bool -> Node
+
+Description:
+Create a boolean node
+
+attribute : Str, Str -> Attribute
+
+Description:
+Create an attribute
+
+render : Node -> Str
+
+Description:
+Render a node to `Str`
+
+escape_xml : Str -> Str
+
+Description:
+Escape special XML characters
+
+### Document
+
+Description:
+XML document with optional declaration
+
+with_declaration : Node -> Document
+
+Description:
+Create a document with standard XML 1.0 UTF-8 declaration
+
+render : Document -> Str
+
+Description:
+Render a document to string
+
