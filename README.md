@@ -9,7 +9,7 @@ View the API documentation at [https://niclas-ahden.github.io/roc-xml/](https://
 ```roc
 app [main!] {
     pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.20.0/X73hGh05nNTkDHU06FHC0YfFaQB1pimX7gncRcao5mU.tar.br",
-    xml: "https://github.com/niclas-ahden/roc-xml/releases/download/0.1.0/<hash>.tar.br",
+    xml: "https://github.com/niclas-ahden/roc-xml/releases/download/0.1.0/92TXyuk6rCZ_LjDEMp0DSwLhus595LAnsUR6R2sYALI.tar.br",
 }
 
 import pf.Stdout
