@@ -7,7 +7,7 @@ Simple XML generation library for Roc.
 ```roc
 app [main!] {
     pf: platform "https://github.com/lukewilliamboswell/roc-platform-template-zig/releases/download/0.9/8GdFEvQYS3TeAZxKvTzCLVdQiomweGtXcdZkXNDEeABq.tar.zst",
-    xml: "package/main.roc",
+    xml: "https://github.com/niclas-ahden/roc-xml/releases/download/1.0.0/8Nm5dN5Z6YKawPkhPqbTUfGVbsQztG8bXTa7RTBKgMbz.tar.zst",
 }
 
 import pf.Stdout
