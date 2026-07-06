@@ -39,8 +39,6 @@ Output:
 <root version="1.0"><item>Hello</item><item>World</item></root>
 ```
 
-See [examples](examples/) for a runnable program.
-
 ## Documentation
 
 View the brief API documentation at [https://niclas-ahden.github.io/roc-xml/](https://niclas-ahden.github.io/roc-xml/).
