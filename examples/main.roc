@@ -1,5 +1,5 @@
 app [main!] {
-	pf: platform "https://github.com/lukewilliamboswell/roc-platform-template-zig/releases/download/0.9/8GdFEvQYS3TeAZxKvTzCLVdQiomweGtXcdZkXNDEeABq.tar.zst",
+	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.23.0-rc1/3hT3SoHZ6qbEsa9qVFLUW3547U5LeoNd1KbpqLpz4r1i.tar.zst",
 	xml: "../package/main.roc",
 }
 
@@ -25,8 +25,8 @@ main! = |_args| {
 	)
 	doc = Document.with_declaration(root)
 	rendered = Document.render(doc)
-	Stdout.line!("Rendered:")
-	Stdout.line!(rendered)
+	Stdout.line!("Rendered:")?
+	Stdout.line!(rendered)?
 
 	Ok({})
 }

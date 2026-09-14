@@ -1,13 +1,13 @@
 ## XML documents: a root node plus an optional XML declaration.
 import Node exposing [Node]
 
-## XML document with optional declaration
-Doc : {
-	root : Node,
-	declaration : [NoDeclaration, Declaration({ encoding : Str, version : Str })],
-}
-
 Document := [].{
+
+	## XML document with optional declaration
+	Doc : {
+		root : Node,
+		declaration : [NoDeclaration, Declaration({ encoding : Str, version : Str })],
+	}
 
 	## Create a document with standard XML 1.0 UTF-8 declaration
 	with_declaration : Node -> Doc
@@ -31,13 +31,8 @@ Document := [].{
 escape_attr : Str -> Str
 escape_attr = |s|
 	s
-		->replace_each("&", "&amp;")
-		->replace_each("\"", "&quot;")
-
-# Replace every occurrence of `from` in `s` with `to`.
-replace_each : Str, Str, Str -> Str
-replace_each = |s, from, to|
-	Str.join_with(s.split_on(from), to)
+		.replace_each("&", "&amp;")
+		.replace_each("\"", "&quot;")
 
 # Document without declaration
 expect {

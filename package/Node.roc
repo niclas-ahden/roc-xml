@@ -4,6 +4,9 @@ Node := [
 	Text(Str),
 ].{
 
+	## XML attribute
+	Attribute : { name : Str, value : Str }
+
 	## Create an XML element
 	element : Str, List(Attribute), List(Node) -> Node
 	element = |tag, attributes, children|
@@ -41,7 +44,7 @@ Node := [
 		match node {
 			Text(content) => escape_xml(content)
 			Element({ tag, attributes, children }) => {
-				opening = 
+				opening =
 					if attributes.is_empty() {
 						"<${tag}>"
 					} else {
@@ -62,20 +65,12 @@ Node := [
 	escape_xml : Str -> Str
 	escape_xml = |s|
 		s
-			->replace_each("&", "&amp;")
-			->replace_each("<", "&lt;")
-			->replace_each(">", "&gt;")
-			->replace_each("\"", "&quot;")
-			->replace_each("'", "&apos;")
+			.replace_each("&", "&amp;")
+			.replace_each("<", "&lt;")
+			.replace_each(">", "&gt;")
+			.replace_each("\"", "&quot;")
+			.replace_each("'", "&apos;")
 }
-
-## XML attribute
-Attribute : { name : Str, value : Str }
-
-# Replace every occurrence of `from` in `s` with `to`.
-replace_each : Str, Str, Str -> Str
-replace_each = |s, from, to|
-	Str.join_with(s.split_on(from), to)
 
 # Escape special characters
 expect {
