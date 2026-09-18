@@ -1,309 +1,147 @@
-## XML nodes and rendering.
+## XML nodes, the data a tree is made of.
+##
+## Nothing here checks anything, and nothing here can fail. A tree becomes
+## XML through [Element]: [Element.new] checks it and reports what XML cannot
+## express, and [Element.new_lossy] repairs it instead.
+##
+## A node is plain data, so a tree can be taken apart with `match` as well as
+## built.
+import Chars
+
 Node := [
-	Element({ tag : Str, attributes : List(Attribute), children : List(Node) }),
-	Text(Str),
+	ElementNode({ tag : Str, attributes : Dict(Str, Str), children : List(Node) }),
+	TextNode(Str),
 ].{
 
-	## XML attribute
-	Attribute : { name : Str, value : Str }
+	## What to do with a character XML cannot express: the control characters
+	## U+0000 to U+001F other than tab, newline and carriage return, and
+	## U+FFFE and U+FFFF.
+	##
+	## A string can hold several of them, and each one is treated on its own:
+	##
+	## - `Drop`: leave each one out.
+	## - `Replace(str)`: write `str` in place of each one, as
+	##   `Str.replace_each` would. The rest of the string is kept.
+	## - `ReplaceWith(fn)`: write in place of each one what `fn` returns
+	##   for its code point.
+	##
+	## ```roc
+	## Node.text_lossy("a\u(0)b\u(7)c", Drop) == Node.text("abc")
+	## Node.text_lossy("a\u(0)b\u(7)c", Replace("?")) == Node.text("a?b?c")
+	## Node.text_lossy("a\u(0)b\u(7)c", ReplaceWith(|code_point| "<${code_point.to_str()}>")) == Node.text("a<0>b<7>c")
+	## ```
+	##
+	## Should a replacement itself hold such a character, that character
+	## becomes U+FFFD.
+	Replacement : [Drop, Replace(Str), ReplaceWith(U32 -> Str)]
 
-	## Create an XML element
-	element : Str, List(Attribute), List(Node) -> Node
-	element = |tag, attributes, children|
-		Element({ tag, attributes, children })
+	## An element with the given tag, attributes and children.
+	##
+	## The attributes are a `Dict` from name to value, so an element cannot
+	## have the same attribute twice. They are rendered in the order they
+	## were inserted.
+	##
+	## ```roc
+	## Node.element("book", Dict.single("id", "1"), [Node.text("Roc")])
+	## ```
+	element : Str, Dict(Str, Str), List(Node) -> Node
+	element = |tag, attributes, children| ElementNode({ tag, attributes, children })
 
-	## Create a text node
+	## A text node. Markup characters are fine, they are escaped when
+	## rendered.
 	text : Str -> Node
-	text = |content|
-		Text(content)
+	text = |content| TextNode(content)
 
-	## Create a number node
+	## A text node with every character XML cannot express dropped or
+	## replaced, so [Element.new] can find nothing in it. This is the way to
+	## put text you do not control into a tree that is otherwise checked, or
+	## to treat one piece of text differently from the rest of a tree given
+	## to [Element.new_lossy].
+	##
+	## ```roc
+	## Node.text_lossy("bell\u(7)", Drop) == Node.text("bell")
+	## Node.text_lossy("bell\u(7)", ReplaceWith(|code_point| "<U+${code_point.to_str()}>")) == Node.text("bell<U+7>")
+	## ```
+	text_lossy : Str, Replacement -> Node
+	text_lossy = |content, replacement| TextNode(Chars.replace_invalid(content, replacement))
+
+	## A text node holding a number, written the way `to_str` writes it.
 	num : a -> Node where [a.to_str : a -> Str]
-	num = |n|
-		Text(n.to_str())
+	num = |n| TextNode(n.to_str())
 
-	## Create a boolean node
+	## A text node holding `true` or `false`.
 	bool : Bool -> Node
-	bool = |b|
-		Text(
-			if b {
-				"true"
-			} else {
-				"false"
-			},
-		)
+	bool = |b| TextNode(
+		if b {
+			"true"
+		} else {
+			"false"
+		},
+	)
 
-	## Create an attribute
-	attribute : Str, Str -> Attribute
-	attribute = |name, value|
-		{ name, value }
-
-	## Render a node to `Str`
-	render : Node -> Str
-	render = |node|
-		match node {
-			Text(content) => escape_xml(content)
-			Element({ tag, attributes, children }) => {
-				opening =
-					if attributes.is_empty() {
-						"<${tag}>"
-					} else {
-						attrs_str = Str.join_with(
-							attributes.map(|attr| "${attr.name}=\"${escape_xml(attr.value)}\""),
-							" ",
-						)
-						"<${tag} ${attrs_str}>"
-					}
-
-				children_str = Str.join_with(children.map(render), "")
-				closing = "</${tag}>"
-				"${opening}${children_str}${closing}"
-			}
+	## Structural equality: same kind of node, same tag and children in the
+	## same order, and the same attributes in any order, or the same text.
+	is_eq : Node, Node -> Bool
+	is_eq = |a, b|
+		match (a, b) {
+			(TextNode(x), TextNode(y)) => x == y
+			(ElementNode(x), ElementNode(y)) => x.tag == y.tag and x.attributes == y.attributes and x.children == y.children
+			_ => Bool.False
 		}
-
-	## Escape special XML characters
-	escape_xml : Str -> Str
-	escape_xml = |s|
-		s
-			.replace_each("&", "&amp;")
-			.replace_each("<", "&lt;")
-			.replace_each(">", "&gt;")
-			.replace_each("\"", "&quot;")
-			.replace_each("'", "&apos;")
 }
 
-# Escape special characters
-expect {
-	input = "<tag>&\"'</tag>"
-	result = Node.escape_xml(input)
-	result == "&lt;tag&gt;&amp;&quot;&apos;&lt;/tag&gt;"
-}
+# Nodes compare structurally
+expect Node.text("a") == Node.text("a")
+expect Node.text("a") != Node.text("b")
+expect Node.element("a", Dict.empty(), [Node.text("x")]) == Node.element("a", Dict.empty(), [Node.text("x")])
+expect Node.element("a", Dict.empty(), [Node.text("x"), Node.text("y")]) != Node.element("a", Dict.empty(), [Node.text("xy")])
+expect Node.element("a", Dict.empty(), []) != Node.text("a")
+expect Node.element("a", Dict.single("id", "1"), []) != Node.element("a", Dict.single("id", "2"), [])
+expect Node.element("a", Dict.single("id", "1"), []) != Node.element("a", Dict.empty(), [])
 
-# Simple element
-expect {
-	node = Node.element("root", [], [Node.text("Hello")])
-	result = Node.render(node)
-	result == "<root>Hello</root>"
-}
+# The order of attributes does not matter to equality, as it does not to XML
+expect
+	Node.element("a", Dict.from_list([("x", "1"), ("y", "2")]), [])
+		== Node.element("a", Dict.from_list([("y", "2"), ("x", "1")]), [])
 
-# Element with attribute
-expect {
-	node = Node.element("root", [Node.attribute("id", "1")], [Node.text("Hello")])
-	result = Node.render(node)
-	result == "<root id=\"1\">Hello</root>"
-}
+# An element cannot have the same attribute twice: the last value is the one kept
+expect
+	Node.element("a", Dict.from_list([("id", "1"), ("id", "2")]), [])
+		== Node.element("a", Dict.single("id", "2"), [])
 
-# Nested elements
-expect {
-	node = Node.element(
-		"root",
-		[],
-		[
-			Node.element("child", [], [Node.text("Hello")]),
-			Node.element("child", [], [Node.text("World")]),
-		],
-	)
-	result = Node.render(node)
-	result == "<root><child>Hello</child><child>World</child></root>"
-}
+# Numbers and booleans are text nodes
+expect Node.num(42.I64) == Node.text("42")
+expect Node.num(-10.I64) == Node.text("-10")
+expect Node.num(19.99) == Node.text("19.99")
+expect Node.bool(Bool.True) == Node.text("true")
+expect Node.bool(Bool.False) == Node.text("false")
 
-# Element with special characters in text
-expect {
-	node = Node.element("root", [], [Node.text("Hello & goodbye")])
-	result = Node.render(node)
-	result == "<root>Hello &amp; goodbye</root>"
-}
+# Lossy text leaves a clean string alone
+expect Node.text_lossy("fine", Drop) == Node.text("fine")
+expect Node.text_lossy("Héllo 世界 🎉", Replace("?")) == Node.text("Héllo 世界 🎉")
 
-# Element with special characters in attribute
-expect {
-	node = Node.element("root", [Node.attribute("value", "a<b")], [])
-	result = Node.render(node)
-	result == "<root value=\"a&lt;b\"></root>"
-}
+# Every character XML cannot express is dropped or replaced
+expect Node.text_lossy("bell\u(7)", Drop) == Node.text("bell")
+expect Node.text_lossy("a\u(0)b\u(7)", Replace("_")) == Node.text("a_b_")
+expect Node.text_lossy("bell\u(7)", ReplaceWith(|code_point| "<U+${code_point.to_str()}>")) == Node.text("bell<U+7>")
 
-# Empty element (no children)
-expect {
-	node = Node.element("empty", [], [])
-	result = Node.render(node)
-	result == "<empty></empty>"
-}
+# Each one is treated on its own, and the rest of the string is kept
+expect Node.text_lossy("a\u(0)b\u(7)c", Drop) == Node.text("abc")
+expect Node.text_lossy("a\u(0)b\u(7)c", Replace("?")) == Node.text("a?b?c")
+expect Node.text_lossy("a\u(0)b\u(7)c", ReplaceWith(|code_point| "<${code_point.to_str()}>")) == Node.text("a<0>b<7>c")
 
-# Empty text node
-expect {
-	node = Node.element("root", [], [Node.text("")])
-	result = Node.render(node)
-	result == "<root></root>"
-}
+# A replacement holding such a character has it turned into U+FFFD
+expect Node.text_lossy("\u(0)", Replace("\u(0)")) == Node.text("\u(FFFD)")
 
-# Multiple attributes
-expect {
-	node = Node.element("tag", [Node.attribute("a", "1"), Node.attribute("b", "2"), Node.attribute("c", "3")], [])
-	result = Node.render(node)
-	result == "<tag a=\"1\" b=\"2\" c=\"3\"></tag>"
-}
+# A node is plain data, so a tree can be taken apart
+tags_in : Node -> List(Str)
+tags_in = |node|
+	match node {
+		TextNode(_) => []
+		ElementNode({ tag, children, .. }) => children.fold([tag], |acc, child| acc.concat(tags_in(child)))
+	}
 
-# Deeply nested elements (3+ levels)
 expect {
-	node = Node.element(
-		"level1",
-		[],
-		[
-			Node.element(
-				"level2",
-				[],
-				[
-					Node.element(
-						"level3",
-						[],
-						[
-							Node.element("level4", [], [Node.text("deep")]),
-						],
-					),
-				],
-			),
-		],
-	)
-	result = Node.render(node)
-	result == "<level1><level2><level3><level4>deep</level4></level3></level2></level1>"
-}
-
-# Mixed children (text and elements)
-expect {
-	node = Node.element(
-		"p",
-		[],
-		[
-			Node.text("Hello "),
-			Node.element("strong", [], [Node.text("world")]),
-			Node.text("!"),
-		],
-	)
-	result = Node.render(node)
-	result == "<p>Hello <strong>world</strong>!</p>"
-}
-
-# Unicode in text
-expect {
-	node = Node.element("root", [], [Node.text("Héllo wörld 🎉")])
-	result = Node.render(node)
-	result == "<root>Héllo wörld 🎉</root>"
-}
-
-# Unicode in attributes
-expect {
-	node = Node.element("root", [Node.attribute("emoji", "🚀"), Node.attribute("name", "Ñoño")], [])
-	result = Node.render(node)
-	result == "<root emoji=\"🚀\" name=\"Ñoño\"></root>"
-}
-
-# Newlines in text
-expect {
-	node = Node.element("pre", [], [Node.text("line1\nline2\nline3")])
-	result = Node.render(node)
-	result == "<pre>line1\nline2\nline3</pre>"
-}
-
-# Whitespace in attributes
-expect {
-	node = Node.element("tag", [Node.attribute("value", "  spaces  ")], [])
-	result = Node.render(node)
-	result == "<tag value=\"  spaces  \"></tag>"
-}
-
-# Empty attribute value
-expect {
-	node = Node.element("input", [Node.attribute("disabled", "")], [])
-	result = Node.render(node)
-	result == "<input disabled=\"\"></input>"
-}
-
-# Integer node
-expect {
-	node = Node.element("count", [], [Node.num(42.I64)])
-	result = Node.render(node)
-	result == "<count>42</count>"
-}
-
-# Negative integer node
-expect {
-	node = Node.element("temp", [], [Node.num(-10.I64)])
-	result = Node.render(node)
-	result == "<temp>-10</temp>"
-}
-
-# Float node
-expect {
-	node = Node.element("price", [], [Node.num(19.99)])
-	result = Node.render(node)
-	result == "<price>19.99</price>"
-}
-
-# Boolean true
-expect {
-	node = Node.element("enabled", [], [Node.bool(Bool.True)])
-	result = Node.render(node)
-	result == "<enabled>true</enabled>"
-}
-
-# Boolean false
-expect {
-	node = Node.element("enabled", [], [Node.bool(Bool.False)])
-	result = Node.render(node)
-	result == "<enabled>false</enabled>"
-}
-
-# Mixed content with numbers and booleans
-expect {
-	node = Node.element(
-		"data",
-		[],
-		[
-			Node.element("count", [], [Node.num(5.I64)]),
-			Node.element("active", [], [Node.bool(Bool.True)]),
-			Node.element("name", [], [Node.text("test")]),
-		],
-	)
-	result = Node.render(node)
-	result == "<data><count>5</count><active>true</active><name>test</name></data>"
-}
-
-# Standalone text node
-expect {
-	node = Node.text("hello")
-	result = Node.render(node)
-	result == "hello"
-}
-
-# Standalone num node
-expect {
-	node = Node.num(42.I64)
-	result = Node.render(node)
-	result == "42"
-}
-
-# Standalone bool node
-expect {
-	node = Node.bool(Bool.True)
-	result = Node.render(node)
-	result == "true"
-}
-
-# Empty string escape
-expect {
-	result = Node.escape_xml("")
-	result == ""
-}
-
-# Zero
-expect {
-	node = Node.num(0.I64)
-	result = Node.render(node)
-	result == "0"
-}
-
-# Decimal number
-expect {
-	node = Node.num(123.456)
-	result = Node.render(node)
-	result == "123.456"
+	tree = Node.element("a", Dict.empty(), [Node.text("x"), Node.element("b", Dict.empty(), [Node.element("c", Dict.empty(), [])])])
+	tags_in(tree) == ["a", "b", "c"]
 }
