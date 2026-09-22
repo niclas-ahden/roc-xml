@@ -55,7 +55,7 @@ Element :: { node : Node, rendered : Str }.{
 	## Given literals alone, the compiler evaluates this while type checking.
 	## `Ok(root) = Element.new(...)` then needs no error handling, and a tree
 	## XML cannot express is a compile error.
-	new : Str, Dict(Str, Str), List(Node) -> Try(Element, [InvalidXml(List(Problem)), ..])
+	new : Str, Dict(Str, Str), List(Node) -> Try(Element, [InvalidXml(List(Problem))])
 	new = |tag, attributes, children| {
 		node = Node.element(tag, attributes, children)
 		# Most trees are clean, and finding that out is much cheaper than
@@ -222,7 +222,7 @@ expect Element.new_lossy("a b", Dict.empty(), [], Drop) == Element.new_lossy("a_
 
 # Part of a tree can be checked early by making it an element. Its problems
 # come with paths from that element, and it goes into a larger tree as a node.
-book_with_title : Str, Str -> Try(Node, [BadTitle(List(Element.Problem)), ..])
+book_with_title : Str, Str -> Try(Node, [BadTitle(List(Element.Problem))])
 book_with_title = |title, subtitle| {
 	title_element = Element.new("title", Dict.empty(), [Node.text(title)]) ? |InvalidXml(problems)| BadTitle(problems)
 	Ok(el("book", [title_element.to_node(), el("subtitle", [Node.text(subtitle)])]))
@@ -245,7 +245,7 @@ expect
 
 # Errors of your own are handled before the tree is checked, the way any
 # Roc error is
-titled : Str -> Try(Node, [EmptyTitle, ..])
+titled : Str -> Try(Node, [EmptyTitle])
 titled = |title|
 	if title.is_empty() {
 		Err(EmptyTitle)

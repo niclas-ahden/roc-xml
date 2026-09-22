@@ -6,7 +6,7 @@ Simple XML generation in Roc.
 
 ```roc
 app [main!] {
-    pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.23.0-rc1/3hT3SoHZ6qbEsa9qVFLUW3547U5LeoNd1KbpqLpz4r1i.tar.zst",
+    pf: platform "https://github.com/niclas-ahden/basic-cli/releases/download/0.26.0/EuuihZ91yAY1ANck1QytRBcW2jexEfH6yVmxcPCHEHDz.tar.zst",
     xml: "https://github.com/niclas-ahden/roc-xml/releases/download/2.0.0/66gygDre4vwq7EReM2UQdvKQyvCJjCitFaFUuESpkqnR.tar.zst",
 }
 
