@@ -7,7 +7,7 @@ Simple XML generation in Roc.
 ```roc
 app [main!] {
     pf: platform "https://github.com/niclas-ahden/basic-cli/releases/download/0.26.0/EuuihZ91yAY1ANck1QytRBcW2jexEfH6yVmxcPCHEHDz.tar.zst",
-    xml: "https://github.com/niclas-ahden/roc-xml/releases/download/2.0.0/66gygDre4vwq7EReM2UQdvKQyvCJjCitFaFUuESpkqnR.tar.zst",
+    xml: "https://github.com/niclas-ahden/roc-xml/releases/download/2.0.1/8zeT4GUf6DwLZnDJfmwWxtdzEa4e7Ud6aiCtWrQGXiGM.tar.zst",
 }
 
 import pf.Stdout
