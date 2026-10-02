@@ -1,5 +1,5 @@
 ## Writing a tree out as XML. Internal to the package.
-import Node exposing [Node]
+import Node
 
 Render := [].{
 

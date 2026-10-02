@@ -6,7 +6,7 @@ app [main!] {
 import pf.Stdout
 import xml.Document
 import xml.Element
-import xml.Node exposing [Node]
+import xml.Node
 
 main! = |args| {
 	# Use `Node.text`, `Node.element` and the other constructors to build up your tree. Wrap it in

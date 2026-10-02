@@ -5,7 +5,7 @@
 ## tree instead, and cannot fail. Either way the result was rendered when it
 ## was made, so [Element.render] and [Document.render] cannot fail.
 import Check
-import Node exposing [Node]
+import Node
 import Render
 import Repair
 

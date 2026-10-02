@@ -1,6 +1,6 @@
 ## Finding what XML cannot express in a tree. Internal to the package.
 import Chars
-import Node exposing [Node]
+import Node
 
 Check := [].{
 

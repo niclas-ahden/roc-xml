@@ -1,5 +1,5 @@
 ## Rendering a complete XML document.
-import Element exposing [Element]
+import Element
 import Node
 
 Document := [].{

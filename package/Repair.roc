@@ -1,7 +1,7 @@
 ## Making a tree into one XML can express. Internal to the package.
 import Chars
 import Check
-import Node exposing [Node]
+import Node
 
 Repair := [].{
 
