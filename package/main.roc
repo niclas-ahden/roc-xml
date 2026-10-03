@@ -1,1 +1,1 @@
-package [Node, Element, Document] {}
+package [Document, Element, Node] {}
