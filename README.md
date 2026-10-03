@@ -6,8 +6,8 @@ Simple XML generation in Roc.
 
 ```roc
 app [main!] {
-    pf: platform "https://github.com/niclas-ahden/basic-cli/releases/download/0.26.0/EuuihZ91yAY1ANck1QytRBcW2jexEfH6yVmxcPCHEHDz.tar.zst",
-    xml: "https://github.com/niclas-ahden/roc-xml/releases/download/2.0.1/8zeT4GUf6DwLZnDJfmwWxtdzEa4e7Ud6aiCtWrQGXiGM.tar.zst",
+    pf: platform "https://github.com/niclas-ahden/basic-cli/releases/download/0.28.0/AP9SGT1yrhCKcFxKcoA5tBkNCM6ibBjBxcQGMTb6krev.tar.zst",
+    xml: "https://github.com/niclas-ahden/roc-xml/releases/download/2.0.2/DmpFQ84o7NWs3kpSgfL41nvqqyhtbnp1d3M177kJEtA2.tar.zst",
 }
 
 import pf.Stdout
