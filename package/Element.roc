@@ -140,21 +140,32 @@ el = |tag, children| Node.element(tag, Dict.empty(), children)
 # An element renders like the node it is
 expect rendered(Element.new("root", Dict.single("id", "1"), [Node.text("Hello")])) == Ok("<root id=\"1\">Hello</root>")
 
-# Every problem in the tree comes out, with the root at the top of each path
+# Every problem in the tree comes out, with the root at the top of each path.
+# These match on the result where `==` against the whole `Err(...)` would do,
+# working around roc-lang/roc#12141.
 expect
-	Element.new("root", Dict.empty(), [el("bad tag", [Node.text("\u(0)")])])
-		== Err(
-			InvalidXml([
-				{ path: [at("root", 0), at("bad tag", 0)], kind: InvalidChar({ code_point: ' ', byte_index: 3, found_in: TagName }) },
-				{ path: [at("root", 0), at("bad tag", 0)], kind: InvalidChar({ code_point: 0, byte_index: 0, found_in: Content(0) }) },
-			]),
-		)
+	match Element.new("root", Dict.empty(), [el("bad tag", [Node.text("\u(0)")])]) {
+		Err(InvalidXml(problems)) =>
+			problems
+				== [
+					{ path: [at("root", 0), at("bad tag", 0)], kind: InvalidChar({ code_point: ' ', byte_index: 3, found_in: TagName }) },
+					{ path: [at("root", 0), at("bad tag", 0)], kind: InvalidChar({ code_point: 0, byte_index: 0, found_in: Content(0) }) },
+				]
+
+		Ok(_) => Bool.False
+	}
 
 # The root's own tag and attributes are checked like any other
-expect Element.new("", Dict.empty(), []) == Err(InvalidXml([{ path: [at("", 0)], kind: EmptyName(TagName) }]))
 expect
-	Element.new("a", Dict.single("id", "\u(0)"), [])
-		== Err(InvalidXml([{ path: [at("a", 0)], kind: InvalidChar({ code_point: 0, byte_index: 0, found_in: AttributeValue("id") }) }]))
+	match Element.new("", Dict.empty(), []) {
+		Err(InvalidXml(problems)) => problems == [{ path: [at("", 0)], kind: EmptyName(TagName) }]
+		Ok(_) => Bool.False
+	}
+expect
+	match Element.new("a", Dict.single("id", "\u(0)"), []) {
+		Err(InvalidXml(problems)) => problems == [{ path: [at("a", 0)], kind: InvalidChar({ code_point: 0, byte_index: 0, found_in: AttributeValue("id") }) }]
+		Ok(_) => Bool.False
+	}
 
 # Lossy text leaves nothing for the check to find
 expect rendered(Element.new("t", Dict.empty(), [Node.text_lossy("bell\u(7)", ReplaceWith(|code_point| "_x000${code_point.to_str()}_"))])) == Ok("<t>bell_x0007_</t>")
