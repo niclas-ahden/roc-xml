@@ -23,6 +23,11 @@ jobs:
   test:
     name: Required
     uses: niclas-ahden/roc-workflows/.github/workflows/test.yml@v3
+    with:
+      # WORKAROUND: roc-lang/roc#13279. An optimized build of Repair's
+      # expects gets a wrong result. Drop this to test at speed again once
+      # it is fixed.
+      test-opt: dev
 
   draft:
     name: Draft
